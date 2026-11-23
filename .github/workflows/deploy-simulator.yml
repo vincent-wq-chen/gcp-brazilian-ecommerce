@@ -1,0 +1,37 @@
+name: Deploy Simulator to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'simulator/**'
+      - '.github/workflows/deploy-simulator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via WIF
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/281210940586/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'olist-pipeline-sa@project-e6cc16fd-3698-47ad-880.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify GCP Authentication & Project Access
+        run: |
+          gcloud auth list
+          gcloud config set project project-e6cc16fd-3698-47ad-880
+          gcloud run services list --region=us-central1
